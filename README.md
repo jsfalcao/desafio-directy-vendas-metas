@@ -6,6 +6,10 @@ Dashboard em **Power BI** para analisar a evolução do faturamento, compará-lo
 
 [![Validação dos números](https://github.com/jsfalcao/desafio-directy-vendas-metas/actions/workflows/validacao.yml/badge.svg)](https://github.com/jsfalcao/desafio-directy-vendas-metas/actions/workflows/validacao.yml)
 
+### ▶ [Assistir à apresentação em vídeo (4 min)](https://youtu.be/rkOMw-r0pAI)
+
+[![Apresentação em vídeo](https://img.youtube.com/vi/rkOMw-r0pAI/hqdefault.jpg)](https://youtu.be/rkOMw-r0pAI)
+
 > ### Resumo executivo
 > - **R$ 171,4 Mi** faturados no período, **103,7%** da meta proporcional.
 > - **2018 cresceu 27,2%** sobre 2017, puxado por **TV and Video (+131,9%)**. **Desktops** foi a única subcategoria em queda, causada pela **Europa (−21,1%)**.

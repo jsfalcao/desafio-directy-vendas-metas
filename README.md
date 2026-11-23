@@ -109,6 +109,7 @@ Código completo em [`dax/medidas.dax`](dax/medidas.dax). Principais medidas:
 | `Faturamento AA`, `Var R$`, `Var %` | Comparativo com o ano anterior (`SAMEPERIODLASTYEAR`) |
 | `% Representatividade`, `% Repres. AA`, `Var Repres. (p.p.)` | Participação no total e sua variação em pontos percentuais |
 | `Lucro`, `% Margem`, `Ranking Subcategoria` | Medidas complementares |
+| `Valor Cenário` | Valores da proposta de metas 2019 (tabela `fMetasProposta`, importada de `docs/proposta_metas_2019.csv`) |
 
 ## Decisões técnicas
 
@@ -135,9 +136,11 @@ Código completo em [`dax/medidas.dax`](dax/medidas.dax). Principais medidas:
 | **1. Visão Geral** | KPIs (Faturamento, Meta, % Atingimento, Gap); evolução mensal Faturamento x Meta; faturamento e representatividade por categoria; Top 3 subcategorias e sua distribuição por continente |
 | **2. Comparativo 2018 x 2017** | KPIs com variação; matriz por categoria e subcategoria com variação e representatividade; variação % por categoria; Desktops por continente |
 | **3. Insights e Recomendações** | Faturamento x Meta por continente; mapa de calor de % atingimento por ano, continente e categoria; destaques para a diretoria |
+| **4. Proposta de Metas 2019** | Realizado 2018 x meta original x cenários propostos (conservador e tendência) por continente e categoria, com metodologia e recomendação |
 
 ![Comparativo](docs/prints/02_comparativo.png)
 ![Insights](docs/prints/03_insights.png)
+![Proposta de Metas 2019](docs/prints/04_proposta_metas.png)
 
 ---
 
@@ -193,7 +196,7 @@ Código completo em [`dax/medidas.dax`](dax/medidas.dax). Principais medidas:
 
 ## Proposta de metas 2019
 
-Como as metas originais de 2019 não são compatíveis com o histórico, proponho dois cenários por continente e categoria (detalhes em [`docs/proposta_metas_2019.csv`](docs/proposta_metas_2019.csv), cálculo em [`validacao/proposta_metas_2019.py`](validacao/proposta_metas_2019.py)):
+Como as metas originais de 2019 não são compatíveis com o histórico, proponho dois cenários, apresentados também na **página 4 do dashboard** por continente e categoria (detalhes em [`docs/proposta_metas_2019.csv`](docs/proposta_metas_2019.csv), cálculo em [`validacao/proposta_metas_2019.py`](validacao/proposta_metas_2019.py)):
 
 - **Conservador:** realizado de 2018 × (1 + crescimento da empresa em 2018, **27,19%**). Mantém o mix de 2018 e o ritmo de crescimento já comprovado.
 - **Tendência:** realizado de 01/01 a 16/03/2019 ÷ **13,61%**, a participação média desse mesmo período no faturamento anual de 2017 e 2018. Projeta o ano com o ritmo atual, respeitando a sazonalidade histórica.

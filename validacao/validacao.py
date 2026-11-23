@@ -60,6 +60,23 @@ def pct(v):
     return f"{v * 100:,.2f}%".replace(".", ",")
 
 
+# Valores exibidos no dashboard Power BI (usados para conferência automática)
+ESPERADO = {
+    "faturamento_total": 171_377_435.74,
+    "meta_proporcional": 165_350_068.16,
+    "faturamento_2017": 67_197_712.59,
+    "faturamento_2018": 85_470_908.87,
+    "computers_total": 127_387_254.64,
+    "desktops_europe_var_2018": -1_040_236.87,
+}
+
+
+def conferir(nome, obtido, esperado, tolerancia=0.01):
+    ok = abs(obtido - esperado) <= tolerancia
+    print(f"   [{'OK' if ok else 'ERRO'}] {nome}: {obtido:,.2f} (dashboard: {esperado:,.2f})")
+    return ok
+
+
 def main():
     v, m = carregar()
     ultima = v["Data Venda"].max()
@@ -102,6 +119,19 @@ def main():
     t18 = sc[2018].nlargest(3)
     print("14. Top 3 subcategorias 2018:", {k: brl(x) for k, x in t18.items()})
     print("15. Mesmas do período total?", list(t18.index) == list(top3.index))
+
+    print("\n== CONFERÊNCIA COM O DASHBOARD ==")
+    checks = [
+        conferir("Faturamento total", fat, ESPERADO["faturamento_total"]),
+        conferir("Meta proporcional", meta_prop, ESPERADO["meta_proporcional"]),
+        conferir("Faturamento 2017", tot[2017], ESPERADO["faturamento_2017"]),
+        conferir("Faturamento 2018", tot[2018], ESPERADO["faturamento_2018"]),
+        conferir("Computers (período)", cat["Computers"], ESPERADO["computers_total"]),
+        conferir("Desktops Europe var. 2018", d.loc["Europe", "var"], ESPERADO["desktops_europe_var_2018"]),
+    ]
+    if not all(checks):
+        raise SystemExit("Divergência entre a validação e o dashboard.")
+    print("Todos os valores conferem com o dashboard.")
 
 
 if __name__ == "__main__":

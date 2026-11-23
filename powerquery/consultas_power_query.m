@@ -117,3 +117,19 @@ let
     Fonte = Table.Distinct(Table.SelectColumns(Localizacao, {"Continente"}))
 in
     Fonte
+
+// ---------- fMetasProposta ----------
+// Proposta de metas 2019 gerada por validacao/proposta_metas_2019.py (docs/proposta_metas_2019.csv)
+let
+    Fonte = Csv.Document(File.Contents("C:\Users\Home\Desktop\DesafioDirecty\desafio-directy-vendas-metas\docs\proposta_metas_2019.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+    Cabecalho = Table.PromoteHeaders(Fonte, [PromoteAllScalars = true]),
+    Colunas = Table.SelectColumns(Cabecalho, {"Continente", "Categoria", "Realizado_2018", "Meta_Original_2019", "Meta_Proposta_Conservadora", "Meta_Proposta_Tendencia"}),
+    Tipos = Table.TransformColumnTypes(Colunas, {{"Realizado_2018", type number}, {"Meta_Original_2019", type number}, {"Meta_Proposta_Conservadora", type number}, {"Meta_Proposta_Tendencia", type number}}, "en-US"),
+    Unpivot = Table.UnpivotOtherColumns(Tipos, {"Continente", "Categoria"}, "Cenário", "Valor"),
+    Nomes = [Realizado_2018 = "Realizado 2018", Meta_Original_2019 = "Meta original", Meta_Proposta_Conservadora = "Conservadora", Meta_Proposta_Tendencia = "Tendência"],
+    Ordens = [Realizado_2018 = 1, Meta_Original_2019 = 2, Meta_Proposta_Conservadora = 3, Meta_Proposta_Tendencia = 4],
+    AddOrdem = Table.AddColumn(Unpivot, "Ordem", each Record.Field(Ordens, [Cenário]), Int64.Type),
+    Renomeado = Table.TransformColumns(AddOrdem, {{"Cenário", each Record.Field(Nomes, _), type text}}),
+    Final = Table.TransformColumnTypes(Renomeado, {{"Continente", type text}, {"Categoria", type text}})
+in
+    Final

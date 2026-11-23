@@ -2,7 +2,15 @@
 
 Dashboard em **Power BI** para analisar a evolução do faturamento, compará-lo com as metas estabelecidas e comparar 2018 com 2017. O objetivo é apoiar o Diretor e os gestores regionais na revisão das metas de 2019.
 
-**Período dos dados:** 01/01/2017 a 16/03/2019 · **Autor:** Jaderson de Sousa Falcão
+**Período dos dados:** 01/01/2017 a 16/03/2019 · **Autor:** Jaderson
+
+[![Validação dos números](https://github.com/jsfalcao/desafio-directy-vendas-metas/actions/workflows/validacao.yml/badge.svg)](https://github.com/jsfalcao/desafio-directy-vendas-metas/actions/workflows/validacao.yml)
+
+> ### Resumo executivo
+> - **R$ 171,4 Mi** faturados no período, **103,7%** da meta proporcional.
+> - **2018 cresceu 27,2%** sobre 2017, puxado por **TV and Video (+131,9%)**. **Desktops** foi a única subcategoria em queda, causada pela **Europa (−21,1%)**.
+> - As **metas de 2019 são incoerentes** com o histórico (ex.: Asia com meta anual de R$ 2,3 Mi após faturar R$ 31,5 Mi em 2018).
+> - Entrego uma **[proposta de metas 2019](#proposta-de-metas-2019)** com dois cenários: **R$ 108,7 Mi** (conservador) e **R$ 137,4 Mi** (tendência), contra R$ 49,9 Mi da meta original.
 
 ![Visão Geral](docs/prints/01_visao_geral.png)
 
@@ -14,11 +22,13 @@ Dashboard em **Power BI** para analisar a evolução do faturamento, compará-lo
 3. [ETL: tratamento dos dados](#etl-tratamento-dos-dados)
 4. [Modelo de dados](#modelo-de-dados)
 5. [Medidas DAX](#medidas-dax)
-6. [Premissas](#premissas)
-7. [Páginas do dashboard](#páginas-do-dashboard)
-8. [Respostas às perguntas do case](#respostas-às-perguntas-do-case)
-9. [Insights e recomendações](#insights-e-recomendações)
-10. [Validação independente (Python)](#validação-independente-python)
+6. [Decisões técnicas](#decisões-técnicas)
+7. [Premissas](#premissas)
+8. [Páginas do dashboard](#páginas-do-dashboard)
+9. [Respostas às perguntas do case](#respostas-às-perguntas-do-case)
+10. [Insights e recomendações](#insights-e-recomendações)
+11. [Proposta de metas 2019](#proposta-de-metas-2019)
+12. [Validação independente e automação](#validação-independente-e-automação)
 
 ---
 
@@ -31,9 +41,14 @@ Dashboard em **Power BI** para analisar a evolução do faturamento, compará-lo
 ├── dados/                           ← arquivos originais do desafio
 ├── powerquery/consultas_power_query.m   ← código M de todas as consultas
 ├── dax/medidas.dax                  ← tabela calendário e todas as medidas
-├── validacao/validacao.py           ← conferência dos números em Python
+├── validacao/
+│   ├── validacao.py                 ← conferência dos números em Python
+│   └── proposta_metas_2019.py       ← cálculo da proposta de metas 2019
+├── .github/workflows/validacao.yml  ← execução automática da validação (GitHub Actions)
 └── docs/
+    ├── Enunciado - Desafio Vendas x Metas.pdf  ← enunciado do case
     ├── Vendas_x_Metas.pdf           ← exportação do relatório
+    ├── proposta_metas_2019.csv      ← proposta de metas por continente e categoria
     └── prints/                      ← imagens das páginas
 ```
 
@@ -94,6 +109,17 @@ Código completo em [`dax/medidas.dax`](dax/medidas.dax). Principais medidas:
 | `Faturamento AA`, `Var R$`, `Var %` | Comparativo com o ano anterior (`SAMEPERIODLASTYEAR`) |
 | `% Representatividade`, `% Repres. AA`, `Var Repres. (p.p.)` | Participação no total e sua variação em pontos percentuais |
 | `Lucro`, `% Margem`, `Ranking Subcategoria` | Medidas complementares |
+
+## Decisões técnicas
+
+| Decisão | Por quê |
+|---|---|
+| **Dimensões ponte** `dCategoria` e `dContinente` | Vendas e metas têm granularidades diferentes (diária por produto e cliente x anual por continente e categoria). As pontes permitem que **um único filtro** atue nas duas fatos, sem relações bidirecionais nem ambiguidade no modelo. |
+| **Meta em branco** abaixo da granularidade da meta | Não existe meta por subcategoria, produto ou cliente. Repetir a meta da categoria nesses níveis induziria a erro, então a medida retorna vazio (`ISFILTERED`). |
+| **Meta Proporcional** por dias | 2019 tem só 75 dias de vendas. Comparar com a meta anual cheia distorce o atingimento. A distribuição diária também permite exibir a meta mês a mês. |
+| **Valor Venda líquido de desconto** | Representa a receita efetivamente faturada. |
+| **ETL 100% no Power Query**, sem tratar os arquivos na mão | O processo é reprodutível: basta substituir os arquivos de origem e atualizar. Remoção de cabeçalhos por condição, e não por número fixo de linhas, para tolerar mudanças no layout. |
+| **Validação independente em Python** e **GitHub Actions** | Os números do dashboard são recalculados por outro caminho e conferidos automaticamente a cada atualização do repositório. |
 
 ## Premissas
 
@@ -165,13 +191,40 @@ Código completo em [`dax/medidas.dax`](dax/medidas.dax). Principais medidas:
 
 ---
 
-## Validação independente (Python)
+## Proposta de metas 2019
 
-Para garantir a consistência dos números, o tratamento foi reproduzido em Python e as respostas foram recalculadas de forma independente do Power BI:
+Como as metas originais de 2019 não são compatíveis com o histórico, proponho dois cenários por continente e categoria (detalhes em [`docs/proposta_metas_2019.csv`](docs/proposta_metas_2019.csv), cálculo em [`validacao/proposta_metas_2019.py`](validacao/proposta_metas_2019.py)):
+
+- **Conservador:** realizado de 2018 × (1 + crescimento da empresa em 2018, **27,19%**). Mantém o mix de 2018 e o ritmo de crescimento já comprovado.
+- **Tendência:** realizado de 01/01 a 16/03/2019 ÷ **13,61%**, a participação média desse mesmo período no faturamento anual de 2017 e 2018. Projeta o ano com o ritmo atual, respeitando a sazonalidade histórica.
+
+| Continente | Categoria | Realizado 2018 | Meta original 2019 | Proposta conservadora | Proposta tendência |
+|---|---|---:|---:|---:|---:|
+| Asia | Audio | R$ 0,87 Mi | R$ 1,02 Mi | R$ 1,11 Mi | R$ 2,86 Mi |
+| Asia | Computers | R$ 20,67 Mi | R$ 0,92 Mi ⚠️ | R$ 26,29 Mi | R$ 28,22 Mi |
+| Asia | TV and Video | R$ 9,91 Mi | R$ 0,32 Mi ⚠️ | R$ 12,61 Mi | R$ 21,48 Mi |
+| Europe | Audio | R$ 0,85 Mi | R$ 7,95 Mi ⚠️ | R$ 1,08 Mi | R$ 2,27 Mi |
+| Europe | Computers | R$ 19,48 Mi | R$ 11,56 Mi | R$ 24,78 Mi | R$ 29,10 Mi |
+| Europe | TV and Video | R$ 8,62 Mi | R$ 10,96 Mi | R$ 10,96 Mi | R$ 18,17 Mi |
+| North America | Audio | R$ 0,38 Mi | R$ 7,39 Mi ⚠️ | R$ 0,48 Mi | R$ 1,00 Mi |
+| North America | Computers | R$ 19,86 Mi | R$ 7,42 Mi | R$ 25,26 Mi | R$ 27,66 Mi |
+| North America | TV and Video | R$ 4,82 Mi | R$ 2,40 Mi | R$ 6,13 Mi | R$ 6,68 Mi |
+| **Total** | | **R$ 85,47 Mi** | **R$ 49,93 Mi** | **R$ 108,71 Mi** | **R$ 137,45 Mi** |
+
+⚠️ Metas com distorção extrema em relação ao realizado de 2018: menos de 10% ou mais de 9 vezes o valor.
+
+**Recomendação:** adotar o **cenário conservador como meta oficial** e o de **tendência como meta desafio**, revisando as duas após o fechamento do 1º semestre. O 1º trimestre é uma amostra curta e mostra uma aceleração forte (+68% sobre o mesmo período de 2018), especialmente na Asia.
+
+---
+
+## Validação independente e automação
+
+Para garantir a consistência dos números, o tratamento foi reproduzido em Python e as respostas foram recalculadas de forma independente do Power BI. O script compara os resultados com os valores exibidos no dashboard e falha se houver qualquer divergência:
 
 ```bash
 pip install pandas openpyxl
 python validacao/validacao.py
+python validacao/proposta_metas_2019.py
 ```
 
-Todos os valores do dashboard conferem com o script.
+O workflow do **GitHub Actions** ([`.github/workflows/validacao.yml`](.github/workflows/validacao.yml)) roda essa validação automaticamente a cada atualização do repositório. O selo no topo da página mostra o resultado da última execução.

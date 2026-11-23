@@ -82,3 +82,6 @@ RANKX (
     ,
     DESC
 )
+
+// ---------- Proposta de metas 2019 (tabela fMetasProposta) ----------
+Valor Cenário = SUM ( fMetasProposta[Valor] )

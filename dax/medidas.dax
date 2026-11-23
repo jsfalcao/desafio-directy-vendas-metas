@@ -1,0 +1,84 @@
+// =====================================================================
+// Tabela calendário e medidas DAX do relatório Vendas_x_Metas.pbix
+// =====================================================================
+
+// ---------- Tabela calculada: dCalendario (marcada como tabela de datas) ----------
+dCalendario =
+VAR Base = CALENDAR ( DATE ( 2017, 1, 1 ), DATE ( 2019, 12, 31 ) )
+RETURN
+    SELECTCOLUMNS (
+        Base,
+        "Data", [Date],
+        "Ano", YEAR ( [Date] ),
+        "Mês Nº", MONTH ( [Date] ),
+        "Mês", FORMAT ( [Date], "mmm" ),
+        "Ano-Mês", FORMAT ( [Date], "yyyy-mm" )
+    )
+
+// ---------- Base ----------
+Faturamento = SUM ( fVendas[Valor Venda] )
+
+Custo = SUM ( fVendas[Valor Custo] )
+
+Lucro = [Faturamento] - [Custo]
+
+% Margem = DIVIDE ( [Lucro], [Faturamento] )
+
+// ---------- Meta ----------
+// A meta só existe por Ano x Continente x Categoria.
+// Em contextos mais detalhados (subcategoria, produto, cliente) retorna em branco.
+Meta =
+IF (
+    ISFILTERED ( dProduto[Subcategoria] ) || ISFILTERED ( dProduto[Produto] )
+        || ISFILTERED ( dProduto[Marca] ) || ISFILTERED ( dCliente[País] )
+        || ISFILTERED ( dCliente[Estado] ) || ISFILTERED ( dCliente[Cidade] )
+        || ISFILTERED ( dCliente[Nome] ) || ISFILTERED ( dCliente[Tipo] ),
+    BLANK (),
+    SUM ( fMetas[Valor Meta] )
+)
+
+// Meta anual distribuída pelos dias do período, limitada à última data de venda (16/03/2019).
+// Permite comparar com 2019 parcial e exibir a meta por mês.
+Meta Proporcional =
+VAR UltimaVenda = CALCULATE ( MAX ( fVendas[Data Venda] ), REMOVEFILTERS () )
+RETURN
+    SUMX (
+        VALUES ( dCalendario[Ano] ),
+        VAR AnoAtual = dCalendario[Ano]
+        VAR MetaAno = CALCULATE ( [Meta], REMOVEFILTERS ( dCalendario ), dCalendario[Ano] = AnoAtual )
+        VAR DiasAno = CALCULATE ( COUNTROWS ( dCalendario ), REMOVEFILTERS ( dCalendario ), dCalendario[Ano] = AnoAtual )
+        VAR DiasPeriodo = CALCULATE ( COUNTROWS ( dCalendario ), KEEPFILTERS ( dCalendario[Data] <= UltimaVenda ) )
+        RETURN DIVIDE ( MetaAno * DiasPeriodo, DiasAno )
+    )
+
+% Atingimento = DIVIDE ( [Faturamento], [Meta Proporcional] )
+
+Gap Meta = [Faturamento] - [Meta Proporcional]
+
+// ---------- Comparativo entre anos ----------
+Faturamento AA = CALCULATE ( [Faturamento], SAMEPERIODLASTYEAR ( dCalendario[Data] ) )
+
+Var R$ = [Faturamento] - [Faturamento AA]
+
+Var % = DIVIDE ( [Var R$], [Faturamento AA] )
+
+// ---------- Representatividade ----------
+% Representatividade =
+DIVIDE ( [Faturamento], CALCULATE ( [Faturamento], REMOVEFILTERS ( dProduto ), REMOVEFILTERS ( dCategoria ) ) )
+
+% Repres. AA = CALCULATE ( [% Representatividade], SAMEPERIODLASTYEAR ( dCalendario[Data] ) )
+
+Var Repres. (p.p.) = [% Representatividade] - [% Repres. AA]
+
+Rótulo Repres. = FORMAT ( [% Representatividade], "0.0%" )
+
+// ---------- Rankings ----------
+Ranking Subcategoria = RANKX ( ALL ( dProduto[Subcategoria] ), [Faturamento] )
+
+Ranking Subcat Geral =
+RANKX (
+    ALL ( dProduto[Subcategoria] ),
+    CALCULATE ( [Faturamento], REMOVEFILTERS ( dContinente ) ),
+    ,
+    DESC
+)
